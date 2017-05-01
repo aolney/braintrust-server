@@ -1,0 +1,8 @@
+/src/
+/js/
+/test/
+/.gitignore
+/.npmignore
+/fableconfig.json
+/yarn-error.log
+/yarn.lock

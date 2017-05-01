@@ -254,3 +254,11 @@ paket-files/
 # don't commit js we transpile to
 app/js/*
 temp/*
+
+/npm-debug.log
+/yarn-error.log
+/.DS_Store
+yarn.lock
+
+#don't commit our keys
+auth.fs

@@ -3,9 +3,11 @@
   "configurations": [
     {
       "type": "node",
+      "protocol": "inspector",
+      "sourceMaps": true,
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceRoot}/app/js/server.js"
+      "program": "${workspaceRoot}/app/js/bundle.js"
     }
   ]
 }
