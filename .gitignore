@@ -262,3 +262,6 @@ yarn.lock
 
 #don't commit our keys
 auth.fs
+
+#don't commit segfaults
+core

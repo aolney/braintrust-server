@@ -26,22 +26,20 @@ open Sugar
 open User
 
 let passportLocal = importAll<obj> "passport-local"
-
-//let LocalStrategy = passportLocal?Strategy
-
+let passportGoogle = importAll<obj> "passport-google-oauth"
 let SetupPassport passport userApi = 
 
-    // session state maintenance
-    // passport?serializeUser <- fun user ``done`` -> ``done``(null, user?id) 
-
-    // passport?deserializeUser <- fun id ``done`` -> userApi?findById( id, fun err user -> ``done``(err,user) )
 
     passport?serializeUser( fun user ``done`` -> ``done``$(null, user?id) |> ignore ) |> ignore
 
     passport?deserializeUser( fun id ``done`` -> userApi?findById( id, fun err user -> ``done``$(err,user) |> ignore ) |> ignore ) |> ignore
 
+    //----------------------------
+    // LOCAL
+    //----------------------------
+    
     //signup local
-
+    
     passport?``use``(
         "local-signup", 
         createNew passportLocal?Strategy (
@@ -51,30 +49,59 @@ let SetupPassport passport userApi =
                 "passReqToCallback" => true
             ],
             fun req email password _done ->
-                //check if user exists
-                userApi?findOne( 
-                    !![
-                        "local.email" => email
-                    ],
-                    fun err user ->
-                        Browser.console.log("checking signup")
-                        if err then 
-                            _done(err)
-                        else if user then
-                            _done$( null, false, req?flash("signupMessage", "That email is already taken"))
-                        else
-                            //create a user
-                            let newUser = createNew userApi ()
-                            newUser?local?email <- email
-                            newUser?local?password <- newUser?generateHash(password)
-                            newUser?save( fun err ->
-                                if err then 
-                                    err |> unbox |> raise
-                                else
-                                    _done$(null,newUser)
-                            ) 
-                ) |> ignore
-        ) |> ignore
+                //check user not already logged in
+                if req?user |> unbox<bool> |> not then
+                    //check if user exists
+                    userApi?findOne( 
+                        !![
+                            "local.email" => email
+                        ],
+                        fun err user ->
+                            Browser.console.log("checking signup")
+                            if err then 
+                                _done(err)
+                            else if user then
+                                _done$( null, false, req?flash("signupMessage", "That email is already taken"))
+                            else
+                                //create a user
+                                let newUser = createNew userApi ()
+                                newUser?local?email <- email
+                                newUser?local?password <- newUser?generateHash(password)
+                                newUser?save( fun err ->
+                                    if err then 
+                                        _done(err)
+                                    else
+                                        _done$(null,newUser)
+                                ) 
+                    ) //|> ignore
+                //user logged in but no local account
+                else if req?user?local?email |> unbox<bool> |> not then
+                    userApi?findOne( 
+                        !![
+                            "local.email" => email
+                        ],
+                        fun err user ->
+                            Browser.console.log("checking signup")
+                            if err then 
+                                _done(err)
+                            else if user then
+                                _done$( null, false, req?flash("loginMessage", "That email is already taken"))
+                            else
+                                //create a user
+                                let user = req?user
+                                user?local?email <- email
+                                user?local?password <- user?generateHash(password)
+                                user?save( fun err ->
+                                    if err then 
+                                        _done(err)
+                                    else
+                                        _done$(null,user)
+                                ) 
+                    ) //|> ignore
+                //logged in and has local account
+                else
+                    _done$(null,req?user) //|> ignore
+        ) //|> ignore
     ) |> ignore
     
     //login local
@@ -100,9 +127,80 @@ let SetupPassport passport userApi =
                             _done$( null, false, req?flash("loginMessage", "Invalid password")) 
                         else
                             _done$( null, user ) 
-                ) |> ignore
-        ) |> ignore
+                ) //|> ignore
+        ) //|> ignore
     ) |> ignore
 
-    //return nothing
+    //----------------------------
+    // GOOGLE
+    //----------------------------
 
+    //signup google
+    passport?``use``(
+        createNew passportGoogle?OAuth2Strategy (
+            //Auth.googleAuth,
+            !![
+                "clientID" => Auth.googleClientID
+                "clientSecret" => Auth.googleClientSecret
+                "callbackURL" => Auth.googleCallbackURL
+                "passReqToCallback" => true
+            ],
+            fun req token refreshToken profile _done -> 
+                //check if user is already logged in
+               if req?user |> unbox<bool> |> not then
+                    //check if user exists
+                    userApi?findOne( 
+                        !![
+                            "google.id" => profile?id
+                        ],
+                        fun err user ->
+                            Browser.console.log("checking google signup")
+                            if err then 
+                                _done(err)
+                            else if user then
+                                //user but no token (previously unlinked)
+                                if user?google?token |> unbox<bool> |> not then
+                                    user?google?token <- token
+                                    user?google?name <- profile?displayName
+                                    user?google?email <- unbox<obj array>(profile?emails).[0]?value
+
+                                    user?save( fun err ->
+                                        if err then 
+                                            _done(err)
+                                        else
+                                            _done$(null,user) //|> ignore
+                                    ) |> ignore
+                                _done$( null, user) //|> ignore
+                            else
+                                //create a user
+                                let newUser = createNew userApi ()
+                                newUser?google?id <- profile?id
+                                newUser?google?token <- token
+                                newUser?google?name <- profile?displayName
+                                newUser?google?email <- unbox<obj array>(profile?emails).[0]?value //check array
+                                newUser?save( fun err ->
+                                    if err then 
+                                        _done(err)
+                                    else
+                                        _done$(null,newUser) //|> ignore
+                                ) //|> ignore
+
+                    ) //|> ignore
+               else
+                    let user = req?user
+                    user?google?id <- profile?id
+                    user?google?token <- token
+                    user?google?name <- profile?displayName
+                    user?google?email <- unbox<obj array>(profile?emails).[0]?value
+                    user?save( fun err ->
+                        if err then 
+                            _done(err)
+                        else
+                            _done$(null,user) //|> ignore
+                    ) //|> ignore
+        ) 
+    ) |> ignore
+
+
+    //return nothing
+    

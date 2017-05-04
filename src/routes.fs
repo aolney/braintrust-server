@@ -30,30 +30,59 @@ let inline toHandler (fn : Request -> Response -> (obj -> unit) -> obj) : expres
     System.Func<_,_,_,_>(fn) 
 
 
+let IsLoggedIn req res next = 
+        match req?isAuthenticated() |> unbox<bool> with
+        | true -> next$() 
+        | false -> res?redirect("/") 
 
 let RegisterRoutes ( app : express.Express ) ( passport : obj ) =
 
-    //home page
+
+    //------------
+    // General
+    //------------
+    //home page -- if they are already logged in, we force them to the profile page
     app.get
         (   U2.Case1 "/", 
-            toHandler <| fun _ res _ -> 
-                res.render ("index.ejs", !![]) |> box
+            toHandler <| fun req res _ -> 
+                match req?isAuthenticated() |> unbox<bool> with
+                | true -> res.render("profile.ejs", !! [ "user" => req.user]) |> box
+                | false -> res.render ("index.ejs", !![]) |> box
+        ) |> ignore
+    // app.get
+    //     (   U2.Case1 "/", 
+    //         toHandler <| fun _ res _ -> 
+    //             res.render ("index.ejs", !![]) |> box
+    //     ) |> ignore
+
+
+    //profile
+    app.get
+        (   U2.Case1 "/profile", 
+            [| 
+                (toHandler <| IsLoggedIn );
+                (toHandler <| fun req res _ -> 
+                    res.render("profile.ejs", !! [ "user" => req.user]) |> box)
+            |] 
         ) |> ignore
 
-    //login
+    //logout
+    app.get
+        (   U2.Case1 "/logout", 
+            toHandler <| fun req res _ -> 
+                req?logout() |> ignore
+                res.redirect("/") |> box
+        ) |> ignore
+
+    //------------
+    // First login
+    //------------
+    //local login
     app.get
         (   U2.Case1 "/login", 
             toHandler <| fun req res _ -> 
                 res.render("login.ejs", !! [ "message" => req?flash("loginMessage")]) |> box
         ) |> ignore
-
-    // process the login form
-    //This works, so the basic syntax is OK. Seems like passport is broken
-    // app.post
-    //     ( U2.Case1 "/login", 
-    //         toHandler <| fun _ res _ -> 
-    //             res.render ("index.ejs", !![]) |> box
-    //     ) |> ignore
 
     app.post
         (   U2.Case1 "/login", 
@@ -66,7 +95,7 @@ let RegisterRoutes ( app : express.Express ) ( passport : obj ) =
             ) |> unbox<express.RequestHandler>
         ) |> ignore
 
-    //signup
+    //local signup
     app.get
         (   U2.Case1 "/signup", 
             toHandler <| fun req res _ -> 
@@ -74,7 +103,7 @@ let RegisterRoutes ( app : express.Express ) ( passport : obj ) =
         ) |> ignore
 
 
-    // process the signup form
+    // process the local signup form
     app.post
         (   U2.Case1 "/signup", 
             passport?authenticate("local-signup",
@@ -86,24 +115,101 @@ let RegisterRoutes ( app : express.Express ) ( passport : obj ) =
             ) |> unbox<express.RequestHandler>
         ) |> ignore
 
-    //profile
+
+    // GOOGLE
+    //authenticate with google
     app.get
-        (   U2.Case1 "/profile", 
-            [|(toHandler <| fun req res next ->
-                match req?isAuthenticated() |> unbox<bool> with
-                | true -> next$() 
-                | false -> res.redirect("/") |> box);
-            (toHandler <| fun req res _ -> 
-                res.render("profile.ejs", !! [ "user" => req.user]) |> box)|] 
+        (   U2.Case1 "/auth/google", 
+            passport?authenticate("google",
+                !! [
+                    "scope" => [|"profile";"email"|];
+                ]
+            ) |> unbox<express.RequestHandler>
         ) |> ignore
 
-    //logout
+    //google callback after authentication
     app.get
-        (   U2.Case1 "/logout", 
+        (   U2.Case1 "/auth/google/callback", 
+            passport?authenticate("google",
+                !! [
+                    "successRedirect" => "/profile";
+                    "failureRedirect" => "/";
+                ]
+            ) |> unbox<express.RequestHandler>
+        ) |> ignore
+
+
+
+    // =============================================================================
+    // AUTHORIZE (ALREADY LOGGED IN / CONNECTING OTHER SOCIAL ACCOUNT) =============
+    // =============================================================================
+
+    // locally --------------------------------
+    app.get
+        ( U2.Case1 "/connect/local", 
             toHandler <| fun req res _ -> 
-                req?logout() |> ignore
-                res.redirect("/") |> box
+                res.render("connect-local.ejs", !! [ "message" => req?flash("loginMessage")]) |> box
+        ) |> ignore
+    app.post
+        (   U2.Case1 "/connect/local", 
+            passport?authenticate("local-signup",  //weird this is authenticate not authorize?
+                !! [
+                    "successRedirect" => "/profile";
+                    "failureRedirect" => "/connect/local";
+                    "failureFlash" => true;
+                ]
+            ) |> unbox<express.RequestHandler>
+        ) |> ignore
+    
+
+    // google --------------------------------
+    app.get
+        (   U2.Case1 "/connect/google", 
+            passport?authorize("google",
+                !! [
+                    "scope" => [|"profile";"email"|];
+                ]
+            ) |> unbox<express.RequestHandler>
         ) |> ignore
 
+    //google callback
+    app.get
+        (   U2.Case1 "/connect/google/callback", 
+            passport?authorize("google",
+                !! [
+                    "successRedirect" => "/profile";
+                    "failureRedirect" => "/";
+                ]
+            ) |> unbox<express.RequestHandler>
+        ) |> ignore
+// =============================================================================
+// UNLINK ACCOUNTS =============================================================
+// =============================================================================
+// used to unlink accounts. for social accounts, just remove the token
+// for local account, remove email and password
+// user account will stay active in case they want to reconnect in the future
 
+    app.get
+        (   U2.Case1 "/unlink/local", 
+            [| 
+                (toHandler <| IsLoggedIn );
+                (toHandler <| fun req res _ -> 
+                    let user = req?user
+                    user?local?email <- ()
+                    user?local?password <- ()
+                    user?save( fun err ->
+                        res.redirect("/profile") |> box) )
+            |] 
+        ) |> ignore
 
+    app.get
+        (   U2.Case1 "/unlink/google", 
+            [| 
+                (toHandler <| IsLoggedIn );
+                (toHandler <| fun req res _ -> 
+                    let user = req?user
+                    user?google?token <- ()
+                    user?save( fun err ->
+                        res.redirect("/profile") |> box) )
+            |] 
+        ) |> ignore

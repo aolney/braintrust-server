@@ -14,13 +14,6 @@ limitations under the License.*)
 
 module Server
 
-// #r "../node_modules/fable-core/Fable.Core.dll"
-// #load "../node_modules/fable-import-express/Fable.Import.Express.fs"
-// #load "routes.fsx"
-// #load "sugar.fsx"
-// #load "secret.fsx"
-// #load "passport.fsx"
-
 open System
 open Fable.Core
 open Fable.Core.JsInterop
@@ -29,17 +22,17 @@ open Sugar
 
 //import node modules
 let app = express.Invoke()
-let bodyParser = importAll<obj> "body-parser"
 let mongoose = importAll<obj> "mongoose"
 let bcrypt = importAll<obj> "bcrypt-nodejs"
 let passport = importAll<obj> "passport"
 let connectFlash = importAll<obj> "connect-flash"
 let morgan = importAll<obj> "morgan"
 let cookieParser = importAll<obj> "cookie-parser"
+let bodyParser = importAll<obj> "body-parser"
 let session = importAll<obj> "express-session"
 
 //acquire database
-mongoose?connect(Secret.mongoConnection) |> ignore
+mongoose?connect(Auth.mongoConnection) |> ignore
 
 //Setup userSchema
 let user = User.SetupUserSchema mongoose bcrypt
@@ -57,7 +50,8 @@ Passport.SetupPassport passport user |> ignore
 //set up express
 app.``use``( morgan$("dev") |> unbox<express.RequestHandler> ) |> ignore
 app.``use``( cookieParser$() |> unbox<express.RequestHandler> ) |> ignore
-app.``use``( bodyParser$() |> unbox<express.RequestHandler> ) |> ignore
+app.``use``( bodyParser?json() |> unbox<express.RequestHandler> ) |> ignore
+app.``use``( bodyParser?urlencoded( !![ "extended" => true ]) |> unbox<express.RequestHandler> ) |> ignore
 
 app.set( "view engine", "ejs") |> ignore
 
@@ -67,14 +61,6 @@ app.``use``( passport?session$() |> unbox<express.RequestHandler> ) |> ignore
 app.``use``( connectFlash$() |> unbox<express.RequestHandler> ) |> ignore
 
 Routes.RegisterRoutes app passport
-
-
-// //For testing only
-// app.get
-//   ( U2.Case1 "/hello/:name", 
-//     fun (req:express.Request) (res:express.Response) _ ->
-//       res.send(sprintf "Goodbye %O"  req.``params``?name) |> box)
-// |> ignore
 
 // Get PORT environment variable or use default
 let port =
@@ -95,7 +81,4 @@ app.listen(port, unbox (fun () ->
 
 //in either case to run server so
 //npm run start
-
-// node server with sign up/login functionality
-// db connectivity with authentication functioning
-// db querying user functioning
+//use launch script from vscode

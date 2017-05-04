@@ -6,7 +6,7 @@
   <ItemGroup>
     <Compile Include="node_modules/fable-import-express/Fable.Import.Express.fs" />
     <Compile Include="src/sugar.fs" />
-    <Compile Include="src/secret.fs" />
+    <Compile Include="src/auth.fs" />
     <Compile Include="src/routes.fs" />
     <Compile Include="src/user.fs" />
     <Compile Include="src/passport.fs" />
