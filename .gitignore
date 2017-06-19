@@ -241,7 +241,8 @@ FakesAssemblies/
 _Pvt_Extensions
 
 # Paket dependency manager
-.paket/paket.exe
+#commit the bootstrapper
+#.paket/paket.exe 
 paket-files/
 
 # FAKE - F# Make
@@ -258,6 +259,7 @@ temp/*
 /npm-debug.log
 /yarn-error.log
 /.DS_Store
+#commit yarn.lock so our dependencies are checked in
 #yarn.lock
 
 #don't commit our keys
