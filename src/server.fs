@@ -64,7 +64,7 @@ Routes.RegisterRoutes app passport
 
 // Get PORT environment variable or use default
 let port =
-  match unbox Node.``process``.env?PORT with
+  match unbox Node.Globals.``process``.env?PORT with
   | Some x -> x 
   | None -> 8080
 
@@ -73,12 +73,19 @@ app.listen(port, unbox (fun () ->
   printfn "BrainTrust server started: http://localhost:%i/" port)) |> ignore
 
 //start docker interactive shell
-//dotnet restore sln (not persisted)
+//dotnet restore sln (not persisted) or persisted
+//dotnet restore --no-cache --packages .nuget/packages BrainTrustServer.sln
 //dotnet fable npm-run watch
 
-//only if ports are mapped in docker (like you might for webpack-dev-server
+//only if ports are mapped in docker (like you might for webpack-dev-server) in a new terminal
 //docker exec -it bash into new docker shell
 
 //in either case to run server so
 //npm run start
 //use launch script from vscode
+
+//sudo service mongod start
+//yarn
+//dotnet restore
+//dotnet fable npm-run build (or watch)
+//dotnet fable npm-run start (starts server)

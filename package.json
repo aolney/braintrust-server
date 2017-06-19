@@ -43,10 +43,8 @@
     "babel-polyfill": "^6.23.0",
     "babel-preset-env": "^1.3.2",
 
-    "fable-loader": "^1.0.0-narumi-912",
-    "fable-core": "^1.0.0-narumi-912",
-    "fable-powerpack": "^1.0.0-narumi-5",
-    "fable-import-express": "^0.0.11",
+    "fable-loader": "^1.0.0",
+    "fable-import-express": "git+https://github.com/fable-compiler/fable-express.git",
 
     "webpack": "^2.3.2",
     "webpack-dev-server": "^2.4.2",

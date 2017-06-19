@@ -12,14 +12,12 @@
     <Compile Include="src/passport.fs" />
     <Compile Include="src/server.fs" />
   </ItemGroup>
-
   <!--
    !  These are Fable libraries that you are using in your project.
    !-->
   <!--<ItemGroup>
     <ProjectReference Include="node_modules/fable-powerpack/Fable.PowerPack.fsproj" />
   </ItemGroup>-->
-
   <!--
    !  DO NOT EDIT BELOW THIS POINT UNLESS YOU KNOW WHAT YOU'RE DOING
    !-->
@@ -28,8 +26,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-    <PackageReference Include="FSharp.Core" Version="4.1.*" />
-    <PackageReference Include="Fable.Core" Version="1.0.0-narumi-*" />
-    <DotNetCliToolReference Include="dotnet-fable" Version="1.0.0-narumi-*" />
+    <DotNetCliToolReference Include="dotnet-fable" Version="1.0.8" />
   </ItemGroup>
+  <Import Project=".paket\Paket.Restore.targets" />
 </Project>
