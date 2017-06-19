@@ -258,7 +258,7 @@ temp/*
 /npm-debug.log
 /yarn-error.log
 /.DS_Store
-yarn.lock
+#yarn.lock
 
 #don't commit our keys
 auth.fs
