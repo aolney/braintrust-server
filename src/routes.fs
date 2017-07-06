@@ -37,10 +37,47 @@ let IsLoggedIn req res next =
 
 let RegisterRoutes ( app : express.Express ) ( passport : obj ) =
 
+    //---------------
+    // Human computation API (could be a separate application, but no reason to split off right now)
+    //---------------
+    //create tasks (only called by AI)
+    app.post
+        (   U2.Case1 "/tasks/:page_id", 
+            //if they are not logged in, force them to log in?
+            toHandler <| fun req res _ -> 
+                match req?isAuthenticated() |> unbox<bool> with
+                | true -> res.json( !! [ "message" => "TODO get task database response"]) |> box
+                | false -> res.json ( !![ "message" => "please log in"]) |> box
 
-    //------------
-    // General
-    //------------
+        ) 
+        |> ignore
+
+    //update tasks (routinely called by client)
+    app.put
+        (   U2.Case1 "/tasks/:page_id", 
+            //if they are not logged in, force them to log in?
+            toHandler <| fun req res _ -> 
+                match req?isAuthenticated() |> unbox<bool> with
+                | true -> 
+                    // PageTasks.findById( 
+                    //     !![
+                    //         "page_id" => req.params?page_id
+                    //     ],
+                    //     fun err pageTask ->
+                    //         () //we want to append to the list of tasks for this page
+                    //         pageTask.save( fun err -> if err then res.send( err ))
+                    //         res.json( !! [ "message" => "tasks updated"]) |> box
+                    //     )
+                    res.json( !! [ "message" => "TODO get task database response"]) |> box
+                | false -> res.json ( !![ "message" => "please log in"]) |> box
+
+        ) 
+        |> ignore
+
+
+    //---------------
+    // General log in
+    //---------------
     //home page -- if they are already logged in, we force them to the profile page
     app.get
         (   U2.Case1 "/", 

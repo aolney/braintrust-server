@@ -22,11 +22,19 @@ open Fable.Core.JsInterop
 open Fable.Import
 open Sugar
 
+/// Users have login data and ability data
 let SetupUserSchema mongoose bcrypt =
-
+    let abilitySchema =
+        mongoose?Schema(
+            !![
+                "name" => mongoose?Schema?Types?String
+                "score" => mongoose?Schema?Types?Number
+            ]
+        )
     let userSchema = 
         mongoose?Schema(
             !![
+                "abilities" => [|abilitySchema|] //not sure if this is the correct array syntax
                 "local" => 
                     !![
                         "email" => mongoose?Schema?Types?String
