@@ -38,23 +38,12 @@ let IsLoggedIn req res next =
 let RegisterRoutes ( app : express.Express ) ( passport : obj ) =
 
     //---------------
-    // Human computation API (could be a separate application, but no reason to split off right now)
+    // Human computation API 
+    // NOTE: could be a separate application, but no reason to split off right now; needs authentication
     //---------------
-    //create tasks (only called by AI)
+    //add tasks (create if not exist, append if exist)
     app.post
-        (   U2.Case1 "/tasks/:page_id", 
-            //if they are not logged in, force them to log in?
-            toHandler <| fun req res _ -> 
-                match req?isAuthenticated() |> unbox<bool> with
-                | true -> res.json( !! [ "message" => "TODO get task database response"]) |> box
-                | false -> res.json ( !![ "message" => "please log in"]) |> box
-
-        ) 
-        |> ignore
-
-    //update tasks (routinely called by client)
-    app.put
-        (   U2.Case1 "/tasks/:page_id", 
+        (   U2.Case1 "/tasks/:uri", 
             //if they are not logged in, force them to log in?
             toHandler <| fun req res _ -> 
                 match req?isAuthenticated() |> unbox<bool> with
@@ -73,7 +62,6 @@ let RegisterRoutes ( app : express.Express ) ( passport : obj ) =
 
         ) 
         |> ignore
-
 
     //---------------
     // General log in

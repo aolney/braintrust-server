@@ -22,19 +22,22 @@ open Fable.Core.JsInterop
 open Fable.Import
 open Sugar
 
+//Ability is also used with taskSets
+//On a user, ability is current ability. On a taskSet, ability is ability "at the moment of the task"
+let SetupAbility mongoose =
+    !![
+        "description" => mongoose?Schema?Types?String
+        "score" => mongoose?Schema?Types?Number
+    ]
+
 /// Users have login data and ability data
 let SetupUserSchema mongoose bcrypt =
-    let abilitySchema =
-        mongoose?Schema(
-            !![
-                "name" => mongoose?Schema?Types?String
-                "score" => mongoose?Schema?Types?Number
-            ]
-        )
+    let ability = SetupAbility mongoose
+        
     let userSchema = 
         mongoose?Schema(
             !![
-                "abilities" => [|abilitySchema|] //not sure if this is the correct array syntax
+                "abilities" => [|ability|] //TODO: check this transpiles OK 
                 "local" => 
                     !![
                         "email" => mongoose?Schema?Types?String

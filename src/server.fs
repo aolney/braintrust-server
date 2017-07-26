@@ -34,7 +34,7 @@ let session = importAll<obj> "express-session"
 //acquire database
 mongoose?connect(Auth.mongoConnection) |> ignore
 
-//Setup userSchema
+//set up schema
 let user = User.SetupUserSchema mongoose bcrypt
 // let res = 
 //   user?findOne( 
@@ -71,18 +71,6 @@ let port =
 // Start the server on the port
 app.listen(port, unbox (fun () ->
   printfn "BrainTrust server started: http://localhost:%i/" port)) |> ignore
-
-//start docker interactive shell
-//dotnet restore sln (not persisted) or persisted
-//dotnet restore --no-cache --packages .nuget/packages BrainTrustServer.sln
-//dotnet fable npm-run watch
-
-//only if ports are mapped in docker (like you might for webpack-dev-server) in a new terminal
-//docker exec -it bash into new docker shell
-
-//in either case to run server so
-//npm run start
-//use launch script from vscode
 
 //sudo service mongod start
 //yarn
