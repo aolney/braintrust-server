@@ -36,6 +36,8 @@ mongoose?connect(Auth.mongoConnection) |> ignore
 
 //set up schema
 let user = User.SetupUserSchema mongoose bcrypt
+let uri = Uri.SetupUriSchema mongoose
+
 // let res = 
 //   user?findOne( 
 //     !![
@@ -60,7 +62,7 @@ app.``use``( passport?initialize$() |> unbox<express.RequestHandler> ) |> ignore
 app.``use``( passport?session$() |> unbox<express.RequestHandler> ) |> ignore
 app.``use``( connectFlash$() |> unbox<express.RequestHandler> ) |> ignore
 
-Routes.RegisterRoutes app passport
+Routes.RegisterRoutes app passport uri
 
 // Get PORT environment variable or use default
 let port =
@@ -77,3 +79,9 @@ app.listen(port, unbox (fun () ->
 //dotnet restore
 //dotnet fable npm-run build (or watch)
 //dotnet fable npm-run start (starts server)
+
+//postman test
+//POST localhost:8080/login x-www-form-urlencoded
+//email=XXX password=XXX
+//this sets a persistent cookie so we can
+//GET localhost:8080/api

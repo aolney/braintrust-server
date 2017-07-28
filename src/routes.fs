@@ -35,33 +35,84 @@ let IsLoggedIn req res next =
         | true -> next$() 
         | false -> res?redirect("/") 
 
-let RegisterRoutes ( app : express.Express ) ( passport : obj ) =
+let RegisterRoutes ( app : express.Express ) ( passport : obj ) ( uriApi ) =
 
     //---------------
     // Human computation API 
     // NOTE: could be a separate application, but no reason to split off right now; needs authentication
     //---------------
-    //add tasks (create if not exist, append if exist)
+    //add tasks (create if not exist, append if exist); user must be authenticated!
     app.post
-        (   U2.Case1 "/tasks/:uri", 
-            //if they are not logged in, force them to log in?
+        (   U2.Case1 "/uri", 
             toHandler <| fun req res _ -> 
                 match req?isAuthenticated() |> unbox<bool> with
                 | true -> 
-                    // PageTasks.findById( 
-                    //     !![
-                    //         "page_id" => req.params?page_id
-                    //     ],
-                    //     fun err pageTask ->
-                    //         () //we want to append to the list of tasks for this page
-                    //         pageTask.save( fun err -> if err then res.send( err ))
-                    //         res.json( !! [ "message" => "tasks updated"]) |> box
-                    //     )
-                    res.json( !! [ "message" => "TODO get task database response"]) |> box
-                | false -> res.json ( !![ "message" => "please log in"]) |> box
+                    let taskSet = 
+                        !![
+                            "user" => req?user?_id ;
+                            "abilities" => req?user?abilities
+                            "questions" => JS.JSON.parse( req.body?questions |> unbox<string> ); //req.body?questions //JS.JSON.parse( req.body?questions  |> unbox<string> );
+                            "gist" => req.body?gist;
+                            "prediction" => req.body?prediction;
+                            "triples" => JS.JSON.parse( req.body?triples |> unbox<string> ); //req.body?triples //JS.JSON.parse( req.body?triples |> unbox<string> );
+                        ]
+                    uriApi?findOne(
+                        !![
+                            "uri" => req.body?uri
+                        ],
+                        fun err uri ->
+                            if err then 
+                                res.send(err) |> box
+                            else if uri then
+                                //uri exists; append to current tasks
+                                uri?taskHistory?push(taskSet) |> ignore
+                                uri?save( fun err ->
+                                    if err then 
+                                       res.send( err ) |> box
+                                    else
+                                       res.json( !! [ "message" => "appended taskSet"]) |> box
+                                )
+                            else
+                                //create a new uri
+                                let newUri = createNew uriApi ()
+                                newUri?uri <- req.body?uri
+                                newUri?taskHistory <- [| taskSet |]
+                                
+                                newUri?save( fun err ->
+                                    if err then 
+                                       res.send( err ) |> box
+                                    else
+                                       res.json( !! [ "message" => "saved new taskSet"]) |> box
+                                )
+                    ) |> box
+                | false -> res.json ( !![ "message" => "You're not authenticated buddy!"]) |> box
 
         ) 
         |> ignore
+
+    app.get
+        (   U2.Case1 "/uri", 
+            toHandler <| fun req res _ -> 
+                match req?isAuthenticated() |> unbox<bool> with
+                | true -> 
+                    //res.json( !! [ "message" => "API works!"]) |> box
+                    let t = 
+                        !![
+                            "uri" => req.query?uri
+                        ]
+                    uriApi?findOne(
+                        !![
+                            "uri" => req.query?uri
+                        ],
+                        fun err uri ->
+                            if err then 
+                                res.send(err) |> box
+                            else
+                                //TODO: human computation algorithm here
+                                res.json(uri) |> box 
+                    ) |> box
+                | false -> res.json( !! [ "message" => "You're not authenticated buddy!"]) |> box
+        ) |> ignore
 
     //---------------
     // General log in

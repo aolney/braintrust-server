@@ -16,7 +16,7 @@ limitations under the License.*)
 // #load "sugar.fsx"
 
 //set of tasks associated with uri
-module Uri 
+module Uri
 
 open System
 open Fable.Core
@@ -24,6 +24,36 @@ open Fable.Core.JsInterop
 open Fable.Import
 open User
 open Sugar
+
+//Records for each task for serialization/deserialization
+type QAPair =
+    {
+        question : string;
+        answer : string;
+    }
+
+type Triple =
+    {
+        start : string;
+        edge : string;
+        ``end`` : string;
+    }
+
+type Ability =
+    {
+        description : string;
+        score : float;
+    }
+
+// type TaskSet =
+//     {
+//         user : string;
+//         abilities : Ability array
+//         questions : QAPair array
+//         gist : string
+//         prediction : string
+//         triples : Triple array
+//     }
 
 /// Users have login data and ability data
 let SetupUriSchema mongoose = 
@@ -41,17 +71,17 @@ let SetupUriSchema mongoose =
             "edge" => mongoose?Schema?Types?String;
             "end" => mongoose?Schema?Types?String;
         ]
-        
+   
     //see comments in User
     let ability = SetupAbility mongoose
 
     //A set of tasks for this Uri plus id and abilities of user who generated these tasks
     let taskSet = 
         !![
-            "userid" => 
+            "user" => 
                 !![
-                    ``type`` => mongoose?Schema?Types?ObjectId;
-                    ref => "User";
+                    "type" => mongoose?Schema?Types?ObjectId;
+                    "ref" => "User";
                 ]
             "abilities" => [| ability |];
             "questions" => [| qaPair |];

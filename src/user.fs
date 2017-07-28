@@ -37,7 +37,7 @@ let SetupUserSchema mongoose bcrypt =
     let userSchema = 
         mongoose?Schema(
             !![
-                "abilities" => [|ability|] //TODO: check this transpiles OK 
+                "abilities" => [|ability|] 
                 "local" => 
                     !![
                         "email" => mongoose?Schema?Types?String

@@ -25,3 +25,12 @@ let inline (=>) x y = x ==> y
 
 let [<Emit("this")>] jsThis<'T> : 'T = jsNative //not available in my version of fable    
 
+(*** define:arrayhacks ***)
+[<Fable.Core.Emit("$0.push($1)")>]
+let push (sb:'a[]) (v:'a) = failwith "js"
+[<Fable.Core.Emit("$0.join($1)")>]
+let join (sb:'a[]) (sep:string) = failwith "js"
+
+type ``[]``<'a> with
+  member x.push(v) = push x v
+  member x.join(s) = join x s
