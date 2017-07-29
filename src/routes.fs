@@ -23,6 +23,7 @@ open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Import
 open Sugar
+open Uri
 
 type Request = express.Request
 type Response = express.Response
@@ -90,16 +91,12 @@ let RegisterRoutes ( app : express.Express ) ( passport : obj ) ( uriApi ) =
         ) 
         |> ignore
 
+    //get tasks for uri (assume hc selection process)
     app.get
         (   U2.Case1 "/uri", 
             toHandler <| fun req res _ -> 
                 match req?isAuthenticated() |> unbox<bool> with
                 | true -> 
-                    //res.json( !! [ "message" => "API works!"]) |> box
-                    let t = 
-                        !![
-                            "uri" => req.query?uri
-                        ]
                     uriApi?findOne(
                         !![
                             "uri" => req.query?uri
@@ -108,12 +105,40 @@ let RegisterRoutes ( app : express.Express ) ( passport : obj ) ( uriApi ) =
                             if err then 
                                 res.send(err) |> box
                             else
-                                //TODO: human computation algorithm here
-                                res.json(uri) |> box 
+                                //human computation item creation happens here
+                                let taskSet = Hc.GetTaskSetForHumanComputation uri req?user
+                                res.json(taskSet) |> box 
                     ) |> box
                 | false -> res.json( !! [ "message" => "You're not authenticated buddy!"]) |> box
         ) |> ignore
 
+    //update ability of user
+    app.post
+        (   U2.Case1 "/ability", 
+            toHandler <| fun req res _ -> 
+                match req?isAuthenticated() |> unbox<bool> with
+                | true -> 
+                    let ability = 
+                        !![
+                            "description" => req.body?description;
+                            "score" => req.body?score;
+                        ]
+
+                    let user = req?user
+                    //convert to map to get "new or update" functionality
+                    let abilityMap = user?abilities |> Uri.abilityArrayToMap
+                    let newAbilities = abilityMap.Add( ability?description |> unbox<string>, ability?score |> unbox<float> ) |> Uri.abilityMapToArray
+                    user?abilities <- newAbilities
+                    user?save( fun err ->
+                        if err then 
+                           res.send( err ) |> box
+                        else
+                           res.json( !! [ "message" => "appended ability"]) |> box
+                    ) |> box
+                | false -> res.json ( !![ "message" => "You're not authenticated buddy!"]) |> box
+
+        ) 
+        |> ignore
     //---------------
     // General log in
     //---------------

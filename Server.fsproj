@@ -9,7 +9,8 @@
     <Compile Include="src/auth.fs" />
     <Compile Include="src/user.fs" />
     <Compile Include="src/uri.fs" />
-      <Compile Include="src/routes.fs" />
+    <Compile Include="src/hc.fs" />
+    <Compile Include="src/routes.fs" />
     <Compile Include="src/passport.fs" />
     <Compile Include="src/server.fs" />
   </ItemGroup>

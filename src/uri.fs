@@ -44,16 +44,20 @@ type Ability =
         description : string;
         score : float;
     }
+let abilityArrayToMap abilities = 
+    abilities |> unbox<Ability[]> |> Array.map(fun a -> a.description,a.score) |> Map.ofArray
+let abilityMapToArray map = 
+    map |> Map.toArray |> Array.map( fun (k,v) -> {description=k;score=v})
 
-// type TaskSet =
-//     {
-//         user : string;
-//         abilities : Ability array
-//         questions : QAPair array
-//         gist : string
-//         prediction : string
-//         triples : Triple array
-//     }
+type TaskSet =
+    {
+        user : string;
+        abilities : Ability array
+        questions : QAPair array
+        gist : string
+        prediction : string
+        triples : Triple array
+    }
 
 /// Users have login data and ability data
 let SetupUriSchema mongoose = 
