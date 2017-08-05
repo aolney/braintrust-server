@@ -48,6 +48,7 @@ let RegisterRoutes ( app : express.Express ) ( passport : obj ) ( uriApi ) =
             toHandler <| fun req res _ -> 
                 match req?isAuthenticated() |> unbox<bool> with
                 | true -> 
+                    //assumes x-www-form-urlencoded
                     let taskSet = 
                         !![
                             "user" => req?user?_id ;
@@ -57,6 +58,23 @@ let RegisterRoutes ( app : express.Express ) ( passport : obj ) ( uriApi ) =
                             "prediction" => req.body?prediction;
                             "triples" => JS.JSON.parse( req.body?triples |> unbox<string> ); //req.body?triples //JS.JSON.parse( req.body?triples |> unbox<string> );
                         ]
+
+                    //assumes json encoding - BROKEN
+                    // let json = req.body // JS.JSON.parse(req.body.ToString())
+                    // let taskSet = 
+                    //     !![
+                    //         "user" => req?user?_id ;
+                    //         "abilities" => req?user?abilities;
+                    //         "questions" => json?questions ;
+                    //         "gist" => json?gist;
+                    //         "prediction" => json?prediction;
+                    //         "triples" => json?triples;
+                    //     ]
+                    // let uriQuery = 
+                    //    !![
+                    //         "uri" => json?uri;
+                    //     ]
+
                     uriApi?findOne(
                         !![
                             "uri" => req.body?uri

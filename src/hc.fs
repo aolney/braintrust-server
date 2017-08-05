@@ -110,10 +110,13 @@ let EmptyTaskSet() =
     }
 
 let GetTaskSetForHumanComputation uri user =
-    let taskSets = uri?taskHistory |> unbox<TaskSet[]>
+    match uri with
+    | None -> EmptyTaskSet()
+    | Some (u) ->
+        let taskSets = u?taskHistory |> unbox<TaskSet[]>
 
-    //We can do HC if we have taskSets; if not we punt
-    if taskSets.Length > 0 then
-        SelectFromTaskSets taskSets
-    else
-        EmptyTaskSet()
+        //We can do HC if we have taskSets; if not we punt
+        if taskSets.Length > 0 then
+            SelectFromTaskSets taskSets
+        else
+            EmptyTaskSet()
