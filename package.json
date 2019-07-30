@@ -47,7 +47,7 @@
     "fable-import-express": "git+https://github.com/fable-compiler/fable-express.git",
 
     "webpack": "^2.3.2",
-    "webpack-dev-server": "^2.4.2",
+    "webpack-dev-server": "^3.1.11",
 
     "source-map-loader": "^0.1.5"
   }
